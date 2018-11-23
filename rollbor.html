@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Bouncing balls</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<h1>bouncing balls</h1>
+<h2>计时：<span>0</span>秒</h2>
+<span id="span"></span>
+<canvas></canvas>
+
+</body>
+</html>
+<script>
+    var span=document.getElementById('span');
+    var score=document.querySelector('span');
+    var canvas = document.querySelector('canvas');
+    var ctx = canvas.getContext('2d');
+    var width = canvas.width = window.innerWidth;
+    var height = canvas.height = window.innerHeight;
+    var time=null;
+    var posttime=60;
+    time =setInterval(function () {
+        posttime-=1;
+        score.innerText=posttime;
+    },1000);
+    function random(min, max) {
+        var num = Math.floor(Math.random() * (max - min + 1)) + min;
+        return num;
+    }
+    function Shape(x, y, velX, velY) {
+        this.x = x;
+        this.y = y;
+        this.velX = velX;
+        this.velY = velY;
+
+    }
+    function Ball(x, y, velX, velY,color,size){
+        Shape.call(this,x, y, velX, velY);
+        this.color=color;
+        this.size=size;
+        this.exist=true;
+
+    }
+    function EvilCircle(x,y,velX, velY){
+        Shape.call(this,x,y,velX, velY,);
+        this.color='white';
+        this.size=10;
+        this.score=0;
+    }
+   EvilCircle.prototype.draw=function(){
+        ctx.beginPath();
+        ctx.strokeStyle=this.color;
+        ctx.arc(this.x,this.y,this.size,0,2*Math.PI);
+        ctx.lineWidth=3;
+        ctx.stroke();
+   };
+    EvilCircle.prototype.moveControl=function(){
+        var _this = this;
+        window.onkeydown = function(e) {
+            if (e.keyCode === 65) {
+                _this.x -= _this.velX;
+            } else if (e.keyCode === 68) {
+                _this.x += _this.velX;
+            } else if (e.keyCode === 87) {
+                _this.y -= _this.velY;
+            } else if (e.keyCode === 83) {
+                _this.y += _this.velY;
+            }
+        };
+        window.onmousemove=function (ev) {
+            _this.x=ev.clientX;
+            _this.y=ev.clientY;
+        }
+    };
+    EvilCircle.prototype.pengBi=function(){
+        if ((this.x + this.size) >= width) {
+            this.x=width-this.size;
+        }
+
+        if ((this.x - this.size) <= 0) {
+            this.x=this.size;
+        }
+
+        if ((this.y + this.size) >= height) {
+            this.y=height-this.size;
+        }
+
+        if ((this.y - this.size) <= 0) {
+            this.y=this.size;
+        }
+    };
+    EvilCircle.prototype.jiFen=function(){
+        for (var j = 0; j < balls.length; j++) {
+                var flag=true;
+                var dx = this.x - balls[j].x;
+                var dy = this.y - balls[j].y;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < this.size + balls[j].size) {
+                    balls[j].exist=false;
+                    balls[j].x=-1;
+                    balls[j].y=-1;
+                    balls[j].velX=0;
+                    balls[j].velY=0;
+                    balls[j].size=0;
+                    this.score+=100;
+            }
+        }
+    };
+    EvilCircle.prototype.jishi=function(){
+        for (var j = 0; j < balls.length; j++) {
+            var flag = true;
+            var dx = this.x - balls[j].x;
+            var dy = this.y - balls[j].y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+            if(distance < this.size + balls[j].size)
+            {
+                balls.splice(j,1);
+                this.score+=100;
+            }
+        }
+    };
+    //velx和y表示两个方向的速度
+    Ball.prototype.draw = function() {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+        ctx.fill();
+    };
+    //求碰壁的判断;
+    Ball.prototype.update = function() {
+        if ((this.x + this.size) >= width) {
+            this.velX = -(this.velX);
+        }
+
+        if ((this.x - this.size) <= 0) {
+            this.velX = -(this.velX);
+        }
+
+        if ((this.y + this.size) >= height) {
+            this.velY = -(this.velY);
+        }
+
+        if ((this.y - this.size) <= 0) {
+            this.velY = -(this.velY);
+        }
+
+        this.x += this.velX;
+        this.y += this.velY;
+    };
+    //球与球相碰的判断;
+    Ball.prototype.collisionDetect = function() {
+        for (var j = 0; j < balls.length; j++) {
+            if (!(this === balls[j])) {
+                var dx = this.x - balls[j].x;
+                var dy = this.y - balls[j].y;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < this.size + balls[j].size) {
+                    balls[j].color = this.color = 'rgb(' + random(0, 255) + ',' + random(0, 255) + ',' + random(0, 255) +')';
+                }
+            }
+        }
+    };
+    var balls=[];
+    ermo1=null;
+    document.body.style.cursor='none';
+    function loop() {
+        if(ermo1)
+        {
+            ermo1.draw();
+            ermo1.moveControl();
+            ermo1.pengBi();
+            ermo1.jiFen();
+        }
+        else
+        {
+            ermo1=new EvilCircle(width/2,height/2,10,10);
+        }
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.fillRect(0, 0, width, height);
+        while (balls.length < 25) {
+            var ball = new Ball(
+                random(10,width),
+                random(10,height),
+                random(-7,7),
+                random(-7,7),
+                'rgb(' + random(0,255) + ',' + random(0,255) + ',' + random(0,255) +')',
+                random(10,20)
+            );
+            balls.push(ball);
+        }
+        for (var i = 0; i < balls.length; i++) {
+            if(balls[i].exist)
+            {
+                balls[i].draw();
+                balls[i].update();
+                balls[i].collisionDetect();
+            }
+
+        }
+        requestAnimationFrame(loop);
+        if(ermo1.score>=2500)
+        {
+            clearInterval(time);
+        }
+    }
+    function loop2(){
+        if(ermo1)
+        {
+            ermo1.draw();
+            ermo1.moveControl();
+            ermo1.pengBi();
+            ermo1.jishi();
+            span.innerText=ermo1.score;
+        }
+        else
+        {
+            ermo1=new EvilCircle(width/2,height/2,10,10);
+        }
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.fillRect(0, 0, width, height);
+        while (balls.length < 25) {
+            var ball = new Ball(
+                random(10,width),
+                random(10,height),
+                random(-7,7),
+                random(-7,7),
+                'rgb(' + random(0,255) + ',' + random(0,255) + ',' + random(0,255) +')',
+                random(10,20)
+            );
+            balls.push(ball);
+        }
+        for (var i = 0; i < balls.length; i++) {
+            if(balls[i].exist)
+            {
+                balls[i].draw();
+                balls[i].update();
+                balls[i].collisionDetect();
+            }
+
+        }
+        var tt=requestAnimationFrame(loop2);
+        if(posttime<=0)
+        {
+            clearInterval(time);
+            cancelAnimationFrame(tt);
+        }
+    }
+    loop2();
+</script>
